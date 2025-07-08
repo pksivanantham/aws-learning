@@ -7,15 +7,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Chosen Palette: Calm Architect -->
-    <!-- Application Structure Plan: A single-page application with a fixed sidebar for navigation and a main content area that dynamically displays different sections. This structure was chosen to break down the dense report into manageable, thematic chunks (Dashboard, Framework, Plan, Tools), allowing for non-linear exploration. Users can jump directly to what they need, for instance, using the 'Service Comparator' tool without scrolling through the entire plan. This task-oriented design enhances usability and makes the information more digestible and engaging than a linear document. -->
-    <!-- Visualization & Content Choices: 
-        - Exam Domains: Report Info -> 4 domains with % weights. Goal -> Inform proportion. Viz -> Donut Chart. Interaction -> Hover for details. Justification -> Visualizes distribution of exam topics effectively. Library -> Chart.js.
-        - Well-Architected Framework: Report Info -> 6 pillars with detailed text. Goal -> Organize and explain. Viz -> Interactive grid of clickable cards. Interaction -> Click to reveal details. Justification -> Encourages exploration and breaks down large text blocks. Method -> HTML/CSS/JS.
-        - 12-Week Plan: Report Info -> Phased weekly schedule. Goal -> Show change over time. Viz -> Accordion-style timeline. Interaction -> Click to expand week's topics. Justification -> Compactly presents a long schedule. Method -> HTML/CSS/JS.
-        - Service Comparisons: Report Info -> Comparison table. Goal -> Compare options. Viz -> Dropdown-driven content cards. Interaction -> Select use-case to dynamically update comparison. Justification -> Transforms static data into an interactive decision-support tool. Method -> HTML/CSS/JS.
-        - Capstone Lab: Report Info -> 5-step project. Goal -> Organize a process. Viz -> Clickable step-flow diagram. Interaction -> Click step to see details. Justification -> Visually clarifies a complex multi-step process. Method -> HTML/CSS/JS.
+    <!-- 
+      Application Structure Plan: A single-page application with a dynamic sidebar for navigation.
+      On desktop, the sidebar is fixed and always visible. On mobile, it collapses into a hamburger menu.
+      This responsive approach ensures optimal viewing and interaction on all screen sizes, making the dense
+      information manageable and accessible everywhere.
     -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- 
+      Visualization & Content Choices: 
+        - Exam Domains: Donut Chart (Chart.js) to visually represent topic weightings.
+        - Well-Architected Framework: Interactive grid of cards to break down text.
+        - 12-Week Plan: Accordion-style timeline for a compact, expandable schedule.
+        - Service Comparisons: Dropdown-driven content to make static data interactive.
+        - Capstone Lab: Clickable step-flow diagram to clarify a complex process.
+    -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
@@ -72,17 +77,23 @@
 </head>
 <body class="antialiased">
 
-    <div class="flex h-screen bg-gray-100">
+    <div class="relative min-h-screen md:flex">
+        <!-- Mobile menu overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+
         <!-- Sidebar -->
-        <div class="hidden md:flex flex-col w-64 bg-[#FDFBF8] border-r border-gray-200">
-            <div class="flex items-center justify-center h-20 border-b border-gray-200">
-                <div class="text-center">
+        <div id="sidebar" class="fixed inset-y-0 left-0 bg-[#FDFBF8] border-r border-gray-200 w-64 z-40 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out">
+            <div class="flex items-center justify-between h-20 px-4 border-b border-gray-200">
+                <div class="text-center mx-auto">
                     <h1 class="text-xl font-bold text-[#A36B4F]">SAA-C03 Planner</h1>
                     <p class="text-xs text-gray-500">Interactive Study Guide</p>
                 </div>
+                <button id="close-sidebar-btn" class="md:hidden text-gray-600 hover:text-gray-800">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
-            <div class="flex-1 overflow-y-auto">
-                <nav class="flex-1 px-4 py-4 space-y-2">
+            <div class="overflow-y-auto flex-1">
+                <nav id="sidebar-nav" class="px-4 py-4 space-y-2">
                     <a href="#" class="nav-link flex items-center px-4 py-2 text-gray-700 rounded-md active" data-target="dashboard">
                         <svg class="sidebar-icon mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                         Dashboard
@@ -114,9 +125,9 @@
         <!-- Main content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <header class="flex items-center justify-between h-20 px-6 bg-[#FDFBF8] border-b border-gray-200">
-                <div class="md:hidden">
-                    <h1 class="text-xl font-bold text-[#A36B4F]">SAA-C03 Planner</h1>
-                </div>
+                <button id="open-sidebar-btn" class="md:hidden text-gray-600 hover:text-gray-800">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
                 <h2 id="header-title" class="text-2xl font-semibold text-gray-800">Dashboard</h2>
             </header>
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-[#FDFBF8]">
@@ -348,29 +359,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // --- Mobile Sidebar Logic ---
+    const sidebar = document.getElementById('sidebar');
+    const openSidebarBtn = document.getElementById('open-sidebar-btn');
+    const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const sidebarNav = document.getElementById('sidebar-nav');
+
+    function openSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        sidebarOverlay.classList.remove('hidden');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        sidebarOverlay.classList.add('hidden');
+    }
+
+    openSidebarBtn.addEventListener('click', openSidebar);
+    closeSidebarBtn.addEventListener('click', closeSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar);
+
     // --- Navigation ---
     const navLinks = document.querySelectorAll('.nav-link');
     const contentSections = document.querySelectorAll('.content-section');
     const headerTitle = document.getElementById('header-title');
 
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = link.getAttribute('data-target');
+    sidebarNav.addEventListener('click', (e) => {
+        const link = e.target.closest('.nav-link');
+        if (!link) return;
 
-            navLinks.forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
+        e.preventDefault();
+        const target = link.getAttribute('data-target');
 
-            contentSections.forEach(section => {
-                section.classList.remove('active');
-                if (section.id === target) {
-                    section.classList.add('active');
-                }
-            });
+        navLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
 
-            headerTitle.textContent = link.textContent.trim();
+        contentSections.forEach(section => {
+            section.classList.remove('active');
+            if (section.id === target) {
+                section.classList.add('active');
+            }
         });
+
+        headerTitle.textContent = link.textContent.trim();
+        
+        // Close sidebar on mobile after navigation
+        if (window.innerWidth < 768) {
+            closeSidebar();
+        }
     });
+
 
     // --- Dashboard: Domain Chart ---
     const ctx = document.getElementById('domainChart').getContext('2d');
@@ -394,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     position: 'bottom',
                     labels: {
                         boxWidth: 12,
-                        padding: 20,
+                        padding: 15,
                         font: { size: 12 }
                     }
                 },
@@ -438,11 +477,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Study Plan Accordion ---
     const accordionContainer = document.getElementById('study-plan-accordion');
-    appData.studyPlan.forEach((phase, phaseIndex) => {
+    appData.studyPlan.forEach((phase) => {
         const phaseDiv = document.createElement('div');
         phaseDiv.className = 'bg-white rounded-lg shadow-sm border border-gray-200';
         
-        let weeksHtml = phase.weeks.map((week, weekIndex) => `
+        let weeksHtml = phase.weeks.map((week) => `
             <div class="border-t border-gray-200">
                 <button class="accordion-trigger w-full text-left p-4 focus:outline-none">
                     <div class="flex justify-between items-center">
@@ -474,8 +513,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 content.style.maxHeight = null;
                 icon.style.transform = 'rotate(0deg)';
             } else {
-                document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
-                document.querySelectorAll('.accordion-trigger svg').forEach(i => i.style.transform = 'rotate(0deg)');
+                // Optional: close other accordions
+                // document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                // document.querySelectorAll('.accordion-trigger svg').forEach(i => i.style.transform = 'rotate(0deg)');
                 content.style.maxHeight = content.scrollHeight + "px";
                 icon.style.transform = 'rotate(180deg)';
             }
@@ -497,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const services = appData.serviceComparisons[useCase];
         services.forEach(service => {
             const card = document.createElement('div');
-            card.className = 'bg-white p-6 rounded-lg shadow-sm border border-gray-200 animate-fade-in';
+            card.className = 'bg-white p-6 rounded-lg shadow-sm border border-gray-200';
             card.innerHTML = `
                 <h4 class="text-lg font-semibold text-gray-800 mb-2">${service.name}</h4>
                 <p class="text-gray-600">${service.details}</p>
@@ -518,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stepItem.className = 'step-flow-item w-full flex items-center p-3 text-left rounded-md transition-colors duration-200 hover:bg-amber-50';
         stepItem.dataset.index = index;
         stepItem.innerHTML = `
-            <span class="step-number flex items-center justify-center w-8 h-8 mr-4 bg-[#EFEAE3] text-[#A36B4F] rounded-full font-bold text-sm">${index + 1}</span>
+            <span class="step-number flex items-center justify-center w-8 h-8 mr-4 bg-[#EFEAE3] text-[#A36B4F] rounded-full font-bold text-sm flex-shrink-0">${index + 1}</span>
             <span class="font-semibold text-gray-700">${step.title}</span>
         `;
         labStepsContainer.appendChild(stepItem);
@@ -527,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateLabDetails(index) {
         const step = appData.labProject.steps[index];
         labDetailsContainer.innerHTML = `
-            <h5 class="text-lg font-bold text-[#A36B4F] mb-3">${index + 1}. ${step.title}</h5>
+            <h5 class="text-lg font-bold text-[#A36B4F] mb-3">${parseInt(index) + 1}. ${step.title}</h5>
             <div class="space-y-3">
                 <div>
                     <strong class="block text-gray-700">Action:</strong>
@@ -575,6 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Exam Guide ---
     function buildChecklist(containerId, data) {
         const container = document.getElementById(containerId);
+        if (!container) return;
         let itemsHtml = data.items.map(item => `
             <li class="flex items-start py-3">
                 <svg class="w-6 h-6 text-emerald-500 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
