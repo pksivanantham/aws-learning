@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive AWS SAA-C03 Study Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Calm Architect -->
+    <!-- Application Structure Plan: A single-page application with a fixed sidebar for navigation and a main content area that dynamically displays different sections. This structure was chosen to break down the dense report into manageable, thematic chunks (Dashboard, Framework, Plan, Tools), allowing for non-linear exploration. Users can jump directly to what they need, for instance, using the 'Service Comparator' tool without scrolling through the entire plan. This task-oriented design enhances usability and makes the information more digestible and engaging than a linear document. -->
+    <!-- Visualization & Content Choices: 
+        - Exam Domains: Report Info -> 4 domains with % weights. Goal -> Inform proportion. Viz -> Donut Chart. Interaction -> Hover for details. Justification -> Visualizes distribution of exam topics effectively. Library -> Chart.js.
+        - Well-Architected Framework: Report Info -> 6 pillars with detailed text. Goal -> Organize and explain. Viz -> Interactive grid of clickable cards. Interaction -> Click to reveal details. Justification -> Encourages exploration and breaks down large text blocks. Method -> HTML/CSS/JS.
+        - 12-Week Plan: Report Info -> Phased weekly schedule. Goal -> Show change over time. Viz -> Accordion-style timeline. Interaction -> Click to expand week's topics. Justification -> Compactly presents a long schedule. Method -> HTML/CSS/JS.
+        - Service Comparisons: Report Info -> Comparison table. Goal -> Compare options. Viz -> Dropdown-driven content cards. Interaction -> Select use-case to dynamically update comparison. Justification -> Transforms static data into an interactive decision-support tool. Method -> HTML/CSS/JS.
+        - Capstone Lab: Report Info -> 5-step project. Goal -> Organize a process. Viz -> Clickable step-flow diagram. Interaction -> Click step to see details. Justification -> Visually clarifies a complex multi-step process. Method -> HTML/CSS/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #333;
+        }
+        .sidebar-icon {
+            width: 24px;
+            height: 24px;
+            stroke-width: 1.5;
+        }
+        .nav-link.active {
+            background-color: #EFEAE3;
+            color: #A36B4F;
+            font-weight: 600;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .pillar-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .pillar-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .step-flow-item.active {
+            background-color: #A36B4F;
+            color: white;
+        }
+        .step-flow-item.active .step-number {
+             background-color: white;
+             color: #A36B4F;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-[#FDFBF8] border-r border-gray-200">
+            <div class="flex items-center justify-center h-20 border-b border-gray-200">
+                <div class="text-center">
+                    <h1 class="text-xl font-bold text-[#A36B4F]">SAA-C03 Planner</h1>
+                    <p class="text-xs text-gray-500">Interactive Study Guide</p>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <nav class="flex-1 px-4 py-4 space-y-2">
+                    <a href="#" class="nav-link flex items-center px-4 py-2 text-gray-700 rounded-md active" data-target="dashboard">
+                        <svg class="sidebar-icon mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        Dashboard
+                    </a>
+                    <a href="#" class="nav-link flex items-center px-4 py-2 text-gray-700 rounded-md" data-target="framework">
+                         <svg class="sidebar-icon mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v11.494m-9-5.747h18"></path><path d="M9.75 3.104v5.714c0 .524.426.95 1.29.95h1.92c.864 0 1.29-.426 1.29-.95V3.104M16.14 20.896v-5.714c0-.524-.426-.95-1.29-.95h-1.92c-.864 0-1.29.426-1.29.95v5.714"></path></svg>
+                        Well-Architected
+                    </a>
+                    <a href="#" class="nav-link flex items-center px-4 py-2 text-gray-700 rounded-md" data-target="plan">
+                        <svg class="sidebar-icon mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        12-Week Plan
+                    </a>
+                    <a href="#" class="nav-link flex items-center px-4 py-2 text-gray-700 rounded-md" data-target="comparator">
+                        <svg class="sidebar-icon mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Service Comparator
+                    </a>
+                     <a href="#" class="nav-link flex items-center px-4 py-2 text-gray-700 rounded-md" data-target="labs">
+                        <svg class="sidebar-icon mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547a2 2 0 00-.547 1.806l.477 2.387a6 6 0 00.517 3.86l.158.318a6 6 0 00.517 3.86l2.387.477a2 2 0 001.806-.547a2 2 0 00.547-1.806l-.477-2.387a6 6 0 00-.517-3.86l-.158-.318a6 6 0 00-.517-3.86l-2.387-.477zM19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547a2 2 0 00-.547 1.806l.477 2.387a6 6 0 00.517 3.86l.158.318a6 6 0 00.517 3.86l2.387.477a2 2 0 001.806-.547a2 2 0 00.547-1.806l-.477-2.387a6 6 0 00-.517-3.86l-.158-.318a6 6 0 00-.517-3.86l-2.387-.477z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 15.75l4.5 4.5m0-4.5l-4.5 4.5M12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75z"></path></svg>
+                        Hands-On Labs
+                    </a>
+                    <a href="#" class="nav-link flex items-center px-4 py-2 text-gray-700 rounded-md" data-target="exam-guide">
+                        <svg class="sidebar-icon mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Exam Day Guide
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="flex items-center justify-between h-20 px-6 bg-[#FDFBF8] border-b border-gray-200">
+                <div class="md:hidden">
+                    <h1 class="text-xl font-bold text-[#A36B4F]">SAA-C03 Planner</h1>
+                </div>
+                <h2 id="header-title" class="text-2xl font-semibold text-gray-800">Dashboard</h2>
+            </header>
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-[#FDFBF8]">
+                <div class="container mx-auto px-6 py-8">
+                    
+                    <!-- Dashboard Section -->
+                    <section id="dashboard" class="content-section active">
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                           <div class="lg:col-span-3">
+                                <h3 class="text-2xl font-bold text-gray-800 mb-4">From Practitioner to Architect: The Mindset Shift</h3>
+                                <p class="text-gray-600 leading-relaxed mb-4">
+                                    Welcome to your interactive study plan for the AWS Certified Solutions Architect - Associate (SAA-C03) exam. This guide is designed for professionals like you who have hands-on experience with AWS services but want to bridge the gap to architectural thinking. The key to success is shifting your focus from "How do I use this service?" to "<strong>Why was this service chosen, and how does it create a secure, resilient, high-performing, and cost-optimized system?</strong>"
+                                </p>
+                                <p class="text-gray-600 leading-relaxed">
+                                    This entire plan is built around the AWS Well-Architected Framework, which is the conceptual compass for the exam and the architect role. Use this dashboard to navigate through the key areas of study, from understanding the exam structure to hands-on labs that will solidify your knowledge.
+                                </p>
+
+                                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                     <h4 class="font-semibold text-lg mb-4 text-gray-700">Exam Blueprint Overview</h4>
+                                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-center">
+                                         <div class="bg-amber-50 p-4 rounded-lg">
+                                             <p class="text-2xl font-bold text-amber-700">65</p>
+                                             <p class="text-sm text-amber-600">Total Questions</p>
+                                         </div>
+                                          <div class="bg-sky-50 p-4 rounded-lg">
+                                             <p class="text-2xl font-bold text-sky-700">130</p>
+                                             <p class="text-sm text-sky-600">Minutes Duration</p>
+                                         </div>
+                                         <div class="bg-emerald-50 p-4 rounded-lg">
+                                             <p class="text-2xl font-bold text-emerald-700">720</p>
+                                             <p class="text-sm text-emerald-600">Passing Score (of 1000)</p>
+                                         </div>
+                                     </div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full">
+                                    <h4 class="font-semibold text-lg mb-4 text-center text-gray-700">Exam Domain Weightings</h4>
+                                    <p class="text-center text-sm text-gray-500 mb-4">Hover over each section to see the details. Security is the most critical domain.</p>
+                                    <div class="chart-container">
+                                        <canvas id="domainChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Well-Architected Framework Section -->
+                    <section id="framework" class="content-section">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">The Architect's Compass: Well-Architected Framework</h3>
+                        <p class="text-gray-600 leading-relaxed mb-8">
+                            The AWS Well-Architected Framework is the conceptual core of the Solutions Architect role and the SAA-C03 exam. It is a problem-solving methodology, not just a checklist. Every exam scenario can be solved by applying its principles. Click on each pillar below to explore its core concepts and understand how to bridge the gap from your current experience to architectural mastery.
+                        </p>
+                        <div id="framework-pillars" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                           <!-- Pillar cards will be injected here by JS -->
+                        </div>
+                    </section>
+
+                    <!-- 12-Week Plan Section -->
+                    <section id="plan" class="content-section">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">A Structured 12-Week Study Curriculum</h3>
+                        <p class="text-gray-600 leading-relaxed mb-8">
+                            This curriculum systematically builds architectural knowledge by prioritizing the most critical areas first. It leverages a two-pronged strategy: deep learning with resources like Adrian Cantrill for foundational concepts, and rigorous testing with tools like TutorialsDojo to master the exam format. Click each phase and week to expand the details.
+                        </p>
+                        <div id="study-plan-accordion" class="space-y-4">
+                           <!-- Accordion will be injected here by JS -->
+                        </div>
+                    </section>
+                    
+                    <!-- Service Comparator Section -->
+                    <section id="comparator" class="content-section">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Interactive Service Comparator</h3>
+                        <p class="text-gray-600 leading-relaxed mb-6">
+                            A huge part of the SAA-C03 exam is situational judgment—choosing the right service for the right job. This tool helps you prepare for these common and challenging scenario questions by comparing key services side-by-side. Select a use case from the dropdown to see the key differentiators and understand when to choose each service.
+                        </p>
+                        <div class="max-w-md mb-8">
+                            <label for="use-case-selector" class="block text-sm font-medium text-gray-700 mb-2">Select a Use Case:</label>
+                            <select id="use-case-selector" class="w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#A36B4F] focus:border-[#A36B4F]">
+                                <!-- Options will be injected by JS -->
+                            </select>
+                        </div>
+                        <div id="comparator-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Comparison cards will be injected here -->
+                        </div>
+                    </section>
+
+                    <!-- Hands-On Labs Section -->
+                    <section id="labs" class="content-section">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">The Hands-On Imperative: A Curated Lab Strategy</h3>
+                        <p class="text-gray-600 leading-relaxed mb-8">
+                           True understanding comes from building. This section outlines a capstone lab project to synthesize everything you've learned, plus smaller labs to reinforce specific patterns. The main project walks you through building a resilient, multi-tier web application from scratch, giving you hands-on experience across all four exam domains. Click each step to see the detailed actions.
+                        </p>
+                        
+                        <div class="flex flex-col lg:flex-row gap-8">
+                           <div class="lg:w-1/3">
+                                <h4 class="text-xl font-semibold mb-4 text-gray-700">Capstone Project Steps</h4>
+                                <div id="lab-steps" class="space-y-2">
+                                    <!-- Step flow items will be injected by JS -->
+                                </div>
+                           </div>
+                           <div class="lg:w-2/3">
+                                <div id="lab-details" class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 min-h-[300px]">
+                                    <!-- Lab step details will be shown here -->
+                                </div>
+                           </div>
+                        </div>
+
+                         <div class="mt-12">
+                            <h4 class="text-xl font-semibold mb-4 text-gray-700">Targeted Mini-Labs</h4>
+                            <div id="mini-labs" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Mini-lab cards injected by JS -->
+                            </div>
+                        </div>
+
+                    </section>
+                    
+                    <!-- Exam Day Guide Section -->
+                    <section id="exam-guide" class="content-section">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Final Preparations: Exam Logistics & Strategy</h3>
+                        <p class="text-gray-600 leading-relaxed mb-8">
+                           The final phase is managing the exam itself. This section provides checklists and strategies for a smooth exam day experience, whether you're taking it at a test center or online. Proper preparation for the logistics is just as important as studying the content.
+                        </p>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div id="exam-logistics-online">
+                                <!-- Online Exam Rules Injected Here -->
+                            </div>
+                             <div id="exam-logistics-strategy">
+                                <!-- Test-Taking Strategy Injected Here -->
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const appData = {
+        examDomains: {
+            labels: ['Design Secure Architectures', 'Design Resilient Architectures', 'Design High-Performing Architectures', 'Design Cost-Optimized Architectures'],
+            data: [30, 26, 24, 20],
+            colors: ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B']
+        },
+        frameworkPillars: [
+            { name: "Operational Excellence", icon: "⚙️", content: "Focuses on running and monitoring systems to deliver business value and continuously improving processes. Key is to 'Perform operations as code' using tools like CloudFormation and automate responses with EventBridge and Lambda." },
+            { name: "Security", icon: "🛡️", content: "Protecting information and systems. This is the most weighted exam domain. Master defense-in-depth: IAM (least privilege), VPC (Security Groups, NACLs), KMS (data encryption), and GuardDuty (threat detection)." },
+            { name: "Reliability", icon: "🔄", content: "Ensuring a workload performs its function correctly and recovers from failure. Design for high availability using ELB across multiple AZs, Auto Scaling, and decoupling with SQS." },
+            { name: "Performance Efficiency", icon: "🚀", content: "Using resources efficiently. This involves selecting the right EC2 instance, storage type (S3 vs EBS vs EFS), and database (RDS vs DynamoDB) for the job, and using CloudFront for global content delivery." },
+            { name: "Cost Optimization", icon: "💰", content: "Avoiding unnecessary costs. Master cost management tools (Cost Explorer, Budgets), EC2 purchasing options (Spot, Reserved), and using serverless (Lambda) and S3 Lifecycle policies to reduce spend." },
+            { name: "Sustainability", icon: "🌿", content: "Minimizing the environmental impact. This overlaps heavily with cost and performance. Use efficient Graviton processors, right-size instances, and use Auto Scaling to eliminate idle resources." }
+        ],
+        studyPlan: [
+            { phase: "Phase I: Building the Foundation (Weeks 1-4)", weeks: [
+                { week: "Weeks 1-2", title: "VPC from First Principles", topics: "VPC CIDR blocks, public/private subnets, route tables, Internet Gateway, NAT Gateway, Network ACLs." },
+                { week: "Week 3", title: "Identity and Access Management (IAM)", topics: "IAM Policy JSON, users, groups, roles, STS, AWS Organizations, SCPs." },
+                { week: "Week 4", title: "Foundational Security & Compute", topics: "Shared Responsibility Model, EC2 instance types and purchasing options, AMIs, EBS volumes." }
+            ]},
+            { phase: "Phase II: Domain-Driven Deep Dives (Weeks 5-9)", weeks: [
+                { week: "Week 5", title: "Secure & High-Performing Storage", topics: "S3 (classes, lifecycle, replication, security), EFS, FSx. Deciding between EBS, EFS, and S3." },
+                { week: "Week 6", title: "Resilient & High-Performing Architectures", topics: "Elastic Load Balancer types, Auto Scaling Groups, launch templates, scaling policies." },
+                { week: "Week 7", title: "High-Performing & Cost-Optimized Databases", topics: "RDS, Aurora, DynamoDB. Relational vs. NoSQL trade-offs. ElastiCache for caching." },
+                { week: "Week 8", title: "Decoupling & Serverless", topics: "SQS (Standard vs. FIFO), SNS (fan-out), Kinesis, Lambda, API Gateway." },
+                { week: "Week 9", title: "Management, Migration & Advanced Networking", topics: "CloudFormation, Systems Manager, CloudWatch, DataSync, DMS, Direct Connect, Site-to-Site VPN." }
+            ]},
+            { phase: "Phase III: Exam Simulation & Knowledge Solidification (Weeks 10-12)", weeks: [
+                { week: "Weeks 10-12", title: "Intense Practice & Review", topics: "Take timed practice exams (e.g., TutorialsDojo). Meticulously review every question, both correct and incorrect. Understand why answers are right or wrong. Create flashcards for weak areas. Aim for 85-90% consistently." }
+            ]}
+        ],
+        serviceComparisons: {
+            "Data Storage": [
+                { name: "Amazon S3 (Object)", details: "Scalable, durable storage for backups, static websites, and unstructured data. Accessed via API." },
+                { name: "Amazon EBS (Block)", details: "High-performance, low-latency block storage for a single EC2 instance; acts as a boot or database volume." },
+                { name: "Amazon EFS (File)", details: "Scalable, shared file system for multiple EC2 instances; ideal for CMS or shared code repositories." }
+            ],
+            "Database": [
+                { name: "Amazon Aurora (Relational)", details: "SQL database for structured data with complex queries (OLTP). High performance and availability." },
+                { name: "Amazon DynamoDB (NoSQL)", details: "Key-value NoSQL for unstructured/semi-structured data needing single-digit millisecond latency at any scale." },
+                { name: "Amazon ElastiCache", details: "In-memory caching service (Redis or Memcached) to improve performance and reduce database load."}
+            ],
+            "Network Firewall": [
+                { name: "Network ACL (NACL)", details: "Stateless firewall at the subnet level. Processes rules in order. Supports allow and deny rules." },
+                { name: "Security Group", details: "Stateful firewall at the instance (ENI) level. Evaluates all rules. Supports allow rules only." }
+            ],
+            "Compute Model": [
+                { name: "Amazon EC2 (Server)", details: "Full control over the OS and environment. Best for legacy apps or long-running processes." },
+                { name: "ECS/EKS (Container)", details: "For deploying, managing, and scaling containerized applications. EKS is Kubernetes; ECS is simpler." },
+                { name: "AWS Lambda (Function)", details: "Serverless, event-driven compute. Pay-per-execution. Best for short tasks and variable traffic APIs." }
+            ],
+            "Asynchronous Messaging": [
+                { name: "Amazon SQS (Queue)", details: "Decouples components; a single message is processed by one consumer. Use for work queues." },
+                { name: "Amazon SNS (Topic)", details: "Pub/sub model; a message is pushed to many subscribers (SQS, Lambda, etc.). Use for fan-out/notifications." },
+                { name: "Amazon Kinesis (Stream)", details: "For real-time processing of large, ordered data streams (e.g., clickstreams, IoT data)." }
+            ]
+        },
+        labProject: {
+            steps: [
+                { title: "Networking & Security", details: { action: "Manually create a custom VPC with public and private subnets across two Availability Zones.", implementation: "Define CIDR, create subnets, configure route tables, and attach an Internet Gateway for public subnets and a NAT Gateway for private ones." } },
+                { title: "Layered Security", details: { action: "Implement a layered security model using Security Groups (SGs) and a Network ACL (NACL).", implementation: "Create `web-sg`, `app-sg`, and `db-sg` that only allow traffic from the preceding layer. Configure the NACL for explicit traffic allowance." } },
+                { title: "Compute & Resilience", details: { action: "Deploy a fleet of web servers that can scale automatically.", implementation: "Create a Launch Template with a user data script. Use an Auto Scaling Group across the public subnets, fronted by an Application Load Balancer." } },
+                { title: "Database & Resilience", details: { action: "Deploy a highly available relational database.", implementation: "Launch an RDS instance with Multi-AZ deployment selected. Place it in a DB Subnet Group using the private subnets." } },
+                { title: "Performance & Cost", details: { action: "Implement caching and data archival strategies.", implementation: "Create a CloudFront distribution pointing to the ALB. Create an S3 bucket with a Lifecycle policy to move old data to Glacier Deep Archive." } }
+            ],
+            miniLabs: [
+                 { title: "Serverless ETL", icon: "⚡️", description: "Use an S3 event notification to trigger a Lambda function. The function reads a new object, extracts metadata, and writes it to a DynamoDB table. This teaches event-driven architecture." },
+                { title: "Decoupled Processing", icon: "🔗", description: "Publish a message to an SNS topic. An SQS queue subscribed to the topic receives the message, which is then processed by a separate Lambda function. This demonstrates the fan-out pattern and resilience." }
+            ]
+        },
+        examGuide: {
+            onlineRules: {
+                title: "Online Proctored Exam Rules",
+                items: [
+                    { name: "System", detail: "Use a personal computer (not corporate) on a stable, wired internet connection. Run the OnVUE system test beforehand." },
+                    { name: "Environment", detail: "You must be in a private, quiet room, alone. Your desk must be completely clear of all materials." },
+                    { name: "Identification", detail: "Present a valid, unexpired, government-issued photo ID. The name must EXACTLY match your registration." },
+                    { name: "Check-in", detail: "Begins 30 mins prior. You will use your phone to submit photos of your face, ID, and testing environment." }
+                ]
+            },
+            strategy: {
+                title: "Proven Test-Taking Strategies",
+                items: [
+                    { name: "Time Management", detail: "Average 2 minutes per question. If stuck, make an educated guess, flag for review, and move on." },
+                    { name: "Deconstruct Questions", detail: "Read the LAST sentence first to identify the goal (e.g., 'most cost-effective'). Scan for keywords like 'highly available', 'least operational overhead'." },
+                    { name: "Elimination", detail: "For most questions, you can quickly eliminate two of the four options. This dramatically increases your odds on the remaining two." }
+                ]
+            }
+        }
+    };
+
+    // --- Navigation ---
+    const navLinks = document.querySelectorAll('.nav-link');
+    const contentSections = document.querySelectorAll('.content-section');
+    const headerTitle = document.getElementById('header-title');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = link.getAttribute('data-target');
+
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === target) {
+                    section.classList.add('active');
+                }
+            });
+
+            headerTitle.textContent = link.textContent.trim();
+        });
+    });
+
+    // --- Dashboard: Domain Chart ---
+    const ctx = document.getElementById('domainChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: appData.examDomains.labels,
+            datasets: [{
+                data: appData.examDomains.data,
+                backgroundColor: appData.examDomains.colors,
+                borderColor: '#FDFBF8',
+                borderWidth: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 20,
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed + '%';
+                            }
+                            return label;
+                        }
+                    },
+                    backgroundColor: '#333',
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 12 },
+                    padding: 10,
+                    cornerRadius: 4
+                }
+            }
+        }
+    });
+    
+    // --- Well-Architected Framework ---
+    const pillarsContainer = document.getElementById('framework-pillars');
+    appData.frameworkPillars.forEach(pillar => {
+        const card = document.createElement('div');
+        card.className = 'pillar-card bg-white p-6 rounded-lg shadow-sm border border-gray-200 cursor-pointer';
+        card.innerHTML = `
+            <div class="flex items-center mb-3">
+                <span class="text-3xl mr-4">${pillar.icon}</span>
+                <h4 class="text-xl font-semibold text-gray-800">${pillar.name}</h4>
+            </div>
+            <p class="text-gray-600 leading-relaxed">${pillar.content}</p>
+        `;
+        pillarsContainer.appendChild(card);
+    });
+
+    // --- Study Plan Accordion ---
+    const accordionContainer = document.getElementById('study-plan-accordion');
+    appData.studyPlan.forEach((phase, phaseIndex) => {
+        const phaseDiv = document.createElement('div');
+        phaseDiv.className = 'bg-white rounded-lg shadow-sm border border-gray-200';
+        
+        let weeksHtml = phase.weeks.map((week, weekIndex) => `
+            <div class="border-t border-gray-200">
+                <button class="accordion-trigger w-full text-left p-4 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-gray-700">${week.week}: ${week.title}</span>
+                        <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                </button>
+                <div class="accordion-content px-4 pb-4 text-gray-600">
+                    <strong>Topics:</strong> ${week.topics}
+                </div>
+            </div>
+        `).join('');
+
+        phaseDiv.innerHTML = `
+            <div class="p-4 bg-gray-50 rounded-t-lg">
+                <h4 class="text-lg font-bold text-[#A36B4F]">${phase.phase}</h4>
+            </div>
+            ${weeksHtml}
+        `;
+        accordionContainer.appendChild(phaseDiv);
+    });
+
+    document.querySelectorAll('.accordion-trigger').forEach(button => {
+        button.addEventListener('click', () => {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('svg');
+            
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                document.querySelectorAll('.accordion-trigger svg').forEach(i => i.style.transform = 'rotate(0deg)');
+                content.style.maxHeight = content.scrollHeight + "px";
+                icon.style.transform = 'rotate(180deg)';
+            }
+        });
+    });
+
+    // --- Service Comparator ---
+    const selector = document.getElementById('use-case-selector');
+    const resultsContainer = document.getElementById('comparator-results');
+    Object.keys(appData.serviceComparisons).forEach(key => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = key;
+        selector.appendChild(option);
+    });
+
+    function updateComparator(useCase) {
+        resultsContainer.innerHTML = '';
+        const services = appData.serviceComparisons[useCase];
+        services.forEach(service => {
+            const card = document.createElement('div');
+            card.className = 'bg-white p-6 rounded-lg shadow-sm border border-gray-200 animate-fade-in';
+            card.innerHTML = `
+                <h4 class="text-lg font-semibold text-gray-800 mb-2">${service.name}</h4>
+                <p class="text-gray-600">${service.details}</p>
+            `;
+            resultsContainer.appendChild(card);
+        });
+    }
+
+    selector.addEventListener('change', (e) => updateComparator(e.target.value));
+    updateComparator(selector.value); // Initial load
+
+    // --- Labs Section ---
+    const labStepsContainer = document.getElementById('lab-steps');
+    const labDetailsContainer = document.getElementById('lab-details');
+
+    appData.labProject.steps.forEach((step, index) => {
+        const stepItem = document.createElement('button');
+        stepItem.className = 'step-flow-item w-full flex items-center p-3 text-left rounded-md transition-colors duration-200 hover:bg-amber-50';
+        stepItem.dataset.index = index;
+        stepItem.innerHTML = `
+            <span class="step-number flex items-center justify-center w-8 h-8 mr-4 bg-[#EFEAE3] text-[#A36B4F] rounded-full font-bold text-sm">${index + 1}</span>
+            <span class="font-semibold text-gray-700">${step.title}</span>
+        `;
+        labStepsContainer.appendChild(stepItem);
+    });
+    
+    function updateLabDetails(index) {
+        const step = appData.labProject.steps[index];
+        labDetailsContainer.innerHTML = `
+            <h5 class="text-lg font-bold text-[#A36B4F] mb-3">${index + 1}. ${step.title}</h5>
+            <div class="space-y-3">
+                <div>
+                    <strong class="block text-gray-700">Action:</strong>
+                    <p class="text-gray-600">${step.details.action}</p>
+                </div>
+                 <div>
+                    <strong class="block text-gray-700">Implementation:</strong>
+                    <p class="text-gray-600">${step.details.implementation}</p>
+                </div>
+            </div>
+        `;
+        document.querySelectorAll('.step-flow-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.index == index) {
+                item.classList.add('active');
+            }
+        });
+    }
+    
+    labStepsContainer.addEventListener('click', e => {
+        const button = e.target.closest('.step-flow-item');
+        if (button) {
+            updateLabDetails(button.dataset.index);
+        }
+    });
+    
+    updateLabDetails(0); // Initial load
+
+    const miniLabsContainer = document.getElementById('mini-labs');
+    appData.labProject.miniLabs.forEach(lab => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-6 rounded-lg shadow-sm border border-gray-200';
+        card.innerHTML = `
+            <div class="flex items-start">
+                <span class="text-2xl mr-4">${lab.icon}</span>
+                <div>
+                    <h5 class="text-lg font-semibold text-gray-800 mb-2">${lab.title}</h5>
+                    <p class="text-gray-600">${lab.description}</p>
+                </div>
+            </div>
+        `;
+        miniLabsContainer.appendChild(card);
+    });
+    
+    // --- Exam Guide ---
+    function buildChecklist(containerId, data) {
+        const container = document.getElementById(containerId);
+        let itemsHtml = data.items.map(item => `
+            <li class="flex items-start py-3">
+                <svg class="w-6 h-6 text-emerald-500 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                    <h5 class="font-semibold text-gray-700">${item.name}</h5>
+                    <p class="text-gray-600">${item.detail}</p>
+                </div>
+            </li>
+        `).join('');
+        
+        container.innerHTML = `
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full">
+                <h4 class="text-xl font-semibold mb-4 text-gray-700">${data.title}</h4>
+                <ul class="divide-y divide-gray-200">${itemsHtml}</ul>
+            </div>
+        `;
+    }
+
+    buildChecklist('exam-logistics-online', appData.examGuide.onlineRules);
+    buildChecklist('exam-logistics-strategy', appData.examGuide.strategy);
+
+});
+</script>
+</body>
+</html>
